@@ -1,0 +1,11 @@
+{
+  "folders": [
+	{
+		"name": "suphx",
+		"path": "."
+	}
+],
+"settings": {
+	"python.defaultInterpreterPath": "venv\\Scripts\\python.exe"
+}
+}
