@@ -6,7 +6,7 @@ from mahjong.shanten import Shanten
 from mahjong.tile import TilesConverter
 
 # 自作関数
-from mjfunc import convertPai, getDoraStr
+from mj_function import convertPai, getDoraStr
 
 # 該当フォルダ内のHTMLファイルから牌譜URLを抽出する
 files = pathlib.Path('mjlog').glob('*.txt')
