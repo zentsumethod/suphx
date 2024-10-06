@@ -1,7 +1,7 @@
 import requests
 import csv
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
+from urllib3.util import Retry
 
 # セッションの設定
 session = requests.Session()
