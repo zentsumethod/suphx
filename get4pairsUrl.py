@@ -23,9 +23,12 @@ listFiles = list(files)
 # 結果を格納する配列
 results = []
 
+# 対象フォルダのファイルを順番に解析する
 for index in range(len(listFiles)):
+    # ファイルを開く
     with open(listFiles[index]) as f:
         s = f.read()
+        # 牌譜IDを取得
         id = str(listFiles[index])[len(targetFolder)+1:-4]
 
         # if id != "2020121810gm-0029-0000-30b10d97":  # バグ改修用
@@ -35,9 +38,9 @@ for index in range(len(listFiles)):
         s = s[20:-12]
         # タグで文字列を分割
         s = s.split("/><")
-        # print(s)
+
+        # 分析用オブジェクト
         game = {
-            "name": "TAIKYOKU",
             "id": id,
             "type": 0,
             "oya": 0,
@@ -46,6 +49,8 @@ for index in range(len(listFiles)):
             "targetPlayerNum": 99,
             "url": "https://tenhou.net/5/?log=" + id,
         }
+
+        # タグを解析し、分析しやすいようオブジェクトに変換する
         for tag in s:
             attrs = tag.split(" ")
             if tag.startswith('SHUFFLE'):
@@ -197,7 +202,7 @@ for index in range(len(listFiles)):
                 continue
         # print(game)
 
-        # 分析フェーズ
+        # 分析用オブジェクトを解析する
         for i in range(len(game['kyokus'])):
             kyoku = game['kyokus'][i]
             # 局数
