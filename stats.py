@@ -173,7 +173,7 @@ for index in range(len(listFiles)):
                         # 対象プレーヤの収支
                         info['ten'] = scoresGap[game['targetPlayerNum']]*100
                     elif attrArr[0] == "yaku":
-                        info['yaku'] = list(map(lambda x: int(x), attrArr[1][1:-1].split(',')))
+                        info['yaku'] = ','.join(map(str, map(int, attrArr[1][1:-1].split(','))))
                     elif attrArr[0] == "who":
                         info['who'] = int(attrArr[1][1:-1])
                         # 和了
