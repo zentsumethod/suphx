@@ -1,6 +1,7 @@
 # import glob
 import pathlib
 import csv
+import os
 import numpy as np
 # mahjongライブラリ
 from mahjong.shanten import Shanten
@@ -9,8 +10,14 @@ from mahjong.tile import TilesConverter
 # 自作関数
 from mj_function import convertPai, getDoraStr
 
+# 変数
+targetFolder = "luckyj" # 対象フォルダ
+# targetFolder = "mjlog" # 対象フォルダ
+targetPlayerName = "%E2%93%9D%4C%75%63%6B%79%4A" # 対象プレーヤの名前
+# targetPlayerName = "%E2%93%9D%53%75%70%68%78" # suphx
+
 # 該当フォルダ内のHTMLファイルから牌譜URLを抽出する
-files = pathlib.Path('luckyj').glob('*.txt')
+files = pathlib.Path(targetFolder).glob('*.txt')
 listFiles = list(files)
 # 解析時間短縮のため、対象ファイルを絞る
 # listFiles = listFiles[:1]
@@ -58,11 +65,9 @@ for index in range(len(listFiles)):
                     attrArr = attrs[i].split("=")
                     if attrArr[0].startswith('n'):
                         playerName = attrArr[1][1:-1]
-                        # suphxの座順を把握
-                        # ⓝSuphx: %E2%93%9D%53%75%70%68%78
-                        # ⓝLuckyJ:%E2%93%9D%4C%75%63%6B%79%4A
-                        if playerName == "%E2%93%9D%4C%75%63%6B%79%4A":
-                            game['targetPlayerNum'] = i - 1
+                        # 対象プレーヤの座順を把握
+                        if playerName == targetPlayerName:
+                            game['targetPlayerNum'] = int(attrArr[0][1])
                             game['url'] = "https://tenhou.net/5/?log=" + id + "&tw=" + str(i-1)
                 continue
             elif tag.startswith('TAIKYOKU'):
@@ -276,7 +281,9 @@ for index in range(len(listFiles)):
     # 進捗表示
     print(str(index+1)+" / "+str(len(listFiles)))
 
-# csvに書き込み
-with open('luckyj_analyze.csv', 'w', newline="") as f:
+# 現在のPythonファイル名を取得し、拡張子を.csvに変更
+csv_filename = os.path.splitext(os.path.basename(__file__))[0] + '.csv'
+
+with open(csv_filename, 'w', newline="") as f:
     writer = csv.writer(f)
     writer.writerows(results)
