@@ -91,6 +91,7 @@ for index in range(len(listFiles)):
                     "flgReach": [0, 0, 0, 0],
                     "flgCheckEnd": [0, 0, 0, 0],
                     "targetNum": 0,
+                    "flgAllLastAssist": False,
                     "info": {
                         "targetPlayerNum": game['targetPlayerNum'],
                         "kyokuNum": -1,
@@ -219,6 +220,56 @@ for index in range(len(listFiles)):
                         info['tenType'] = 4
                         info['ten'] = 0
                 continue
+            # 回線切れ
+            elif tag.startswith('BYE'):
+                # print('BYE')
+                # <BYE>はtjとしてカウントされない
+                # if len(game['kyokus']) > 0: # INIT前に回線切れが発生することがあるため
+                # print(game['url'])
+                # print("局確認："+str(game['kyokus'][len(game['kyokus'])-1]['seed'][0]))
+                continue
+            # ツモ牌
+            elif tag.startswith('T'):
+                # print('T')
+                game['kyokus'][len(game['kyokus'])-1]['tsumos'][0].append(int(tag[1:]))
+                game['kyokus'][len(game['kyokus'])-1]['actionAll'].append({"playerNum": 0, "type": "tsumo", "pai": int(tag[1:])})
+                continue
+            elif tag.startswith('U'):
+                # print('U')
+                game['kyokus'][len(game['kyokus'])-1]['tsumos'][1].append(int(tag[1:]))
+                game['kyokus'][len(game['kyokus'])-1]['actionAll'].append({"playerNum": 1, "type": "tsumo", "pai": int(tag[1:])})
+                continue
+            elif tag.startswith('V'):
+                # print('V')
+                game['kyokus'][len(game['kyokus'])-1]['tsumos'][2].append(int(tag[1:]))
+                game['kyokus'][len(game['kyokus'])-1]['actionAll'].append({"playerNum": 2, "type": "tsumo", "pai": int(tag[1:])})
+                continue
+            elif tag.startswith('W'):
+                # print('W')
+                game['kyokus'][len(game['kyokus'])-1]['tsumos'][3].append(int(tag[1:]))
+                game['kyokus'][len(game['kyokus'])-1]['actionAll'].append({"playerNum": 3, "type": "tsumo", "pai": int(tag[1:])})
+                continue
+            # 打牌
+            elif tag.startswith('D'):
+                # print('D')
+                game['kyokus'][len(game['kyokus'])-1]['kawas'][0].append(int(tag[1:]))
+                game['kyokus'][len(game['kyokus'])-1]['actionAll'].append({"playerNum": 0, "type": "dahai", "pai": int(tag[1:])})
+                continue
+            elif tag.startswith('E'):
+                # print('E')
+                game['kyokus'][len(game['kyokus'])-1]['kawas'][1].append(int(tag[1:]))
+                game['kyokus'][len(game['kyokus'])-1]['actionAll'].append({"playerNum": 1, "type": "dahai", "pai": int(tag[1:])})
+                continue
+            elif tag.startswith('F'):
+                # print('F')
+                game['kyokus'][len(game['kyokus'])-1]['kawas'][2].append(int(tag[1:]))
+                game['kyokus'][len(game['kyokus'])-1]['actionAll'].append({"playerNum": 2, "type": "dahai", "pai": int(tag[1:])})
+                continue
+            elif tag.startswith('G'):
+                # print('G')
+                game['kyokus'][len(game['kyokus'])-1]['kawas'][3].append(int(tag[1:]))
+                game['kyokus'][len(game['kyokus'])-1]['actionAll'].append({"playerNum": 3, "type": "dahai", "pai": int(tag[1:])})
+                continue
             # 鳴き
             elif tag.startswith('N'):
                 # print('N')
@@ -248,6 +299,9 @@ for index in range(len(listFiles)):
             kyoku['ts'] = i
             # print('ts:'+str(i))
 
+            # infoを取得
+            info = game['kyokus'][i]['info']
+
             # 打牌、ツモ、鳴きを順番通りに処理する
             for j in range(len(game['kyokus'][i]['actionAll'])):
                 action = game['kyokus'][i]['actionAll'][j]
@@ -269,14 +323,38 @@ for index in range(len(listFiles)):
                             # 該当プレーヤの鳴きフラグを立てる
                             kyoku['flgNaki'][playerNum] += 1
 
+                        # ツモった時
+                        elif action['type'] == "tsumo":
+                            # ツモ牌を手牌に加える
+                            kyoku['lastTehais'][playerNum].append(action['pai'])
+
+                        # 打牌した時
+                        elif action['type'] == "dahai":
+                            # 手出しチェック（手牌の配列の最後の要素が打牌と同じだった場合ツモ切り）
+                            # lastTsumo = kyoku['lastTehais'][playerNum][-1]
+                            # if lastTsumo == action['pai']:
+                            # print('ツモ切り')
+
+                            # 切った牌を手牌から削除する
+                            kyoku['lastTehais'][playerNum].remove(action['pai'])
+                            # 打牌数をカウントする
+                            kyoku['dahaiCounts'][playerNum] += 1
+
+                            # 調査プレーヤーのオーラス
+                            if playerNum == game['targetPlayerNum']:
+                                if info['kyokuNum'] == 7:
+                                    # 最初に捨てた牌が中張牌だった場合、フラグを立てる
+                                    if kyoku['dahaiCounts'][playerNum] == 1 and convertPai(action['pai'])[0] in ['0', '3','4','5','6','7'] and convertPai(action['pai'])[1] != 'z':
+                                        kyoku['flgAllLastAssist'] = True
+                                        print(game['url']+"&ts="+str(kyoku['ts']))
+                                        print(convertPai(action['pai']))
             # CSVに記載するデータとして追加
-            info = game['kyokus'][i]['info']
-            results.append([info['targetPlayerNum'], info['kyokuNum'], info['initScores'],info['endScores'], info['tenType'], info['ten'], info['oya'], kyoku['flgReach'][info['targetPlayerNum']], kyoku['flgNaki'][info['targetPlayerNum']], info['yaku'], info['who'], info['fromWho'],game['url']+"&ts="+str(kyoku['ts'])])
+            results.append([info['targetPlayerNum'], info['kyokuNum'], info['initScores'],info['endScores'], info['tenType'], info['ten'], info['oya'], kyoku['flgReach'][info['targetPlayerNum']], kyoku['flgNaki'][info['targetPlayerNum']], info['yaku'], info['who'], info['fromWho'],game['url']+"&ts="+str(kyoku['ts']), kyoku['flgAllLastAssist']])
 
             # ダブロン対応
             doubleInfo = game['kyokus'][i]['doubleRonInfo']
             if doubleInfo['tenType'] != -1:
-                results.append([doubleInfo['targetPlayerNum'], doubleInfo['kyokuNum'], doubleInfo['initScores'],doubleInfo['endScores'], doubleInfo['tenType'], doubleInfo['ten'], doubleInfo['oya'], kyoku['flgReach'][info['targetPlayerNum']], kyoku['flgNaki'][info['targetPlayerNum']], doubleInfo['yaku'], doubleInfo['who'], doubleInfo['fromWho'],game['url']+"&ts="+str(kyoku['ts'])])
+                results.append([doubleInfo['targetPlayerNum'], doubleInfo['kyokuNum'], doubleInfo['initScores'],doubleInfo['endScores'], doubleInfo['tenType'], doubleInfo['ten'], doubleInfo['oya'], kyoku['flgReach'][info['targetPlayerNum']], kyoku['flgNaki'][info['targetPlayerNum']], doubleInfo['yaku'], doubleInfo['who'], doubleInfo['fromWho'],game['url']+"&ts="+str(kyoku['ts']),kyoku['flgAllLastAssist']])
 
     # 進捗表示
     print(str(index+1)+" / "+str(len(listFiles)))
